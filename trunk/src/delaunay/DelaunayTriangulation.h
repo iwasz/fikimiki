@@ -120,7 +120,7 @@ void DelaunayTriangulation<Input, Traits>::constructDelaunay (/*Geometry::LineSt
         construct_voronoi (input.begin (), input.end (), &vd);
 
 #ifndef NDEBUG
-        printlog ("Voronoi diagram construction time : %f ms", t0.elapsed ().wall / 1000000.0);
+        std::cerr << "Voronoi diagram construction time : " << t0.elapsed ().wall / 1000000.0 << " ms";
         boost::timer::cpu_timer t1;
 #endif
 
