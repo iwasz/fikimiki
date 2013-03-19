@@ -17,6 +17,7 @@ SET (CMAKE_VERBOSE_MAKEFILE 0)
 find_package (Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
+message (${Boost_INCLUDE_DIRS})
 
 find_package(GLUT REQUIRED)
 include_directories(${GLUT_INCLUDE_DIRS})
@@ -35,3 +36,5 @@ add_executable (${PROJECT_NAME} ${SOURCES})
 #TARGET_LINK_LIBRARIES (${PROJECT_NAME} boost_program_options)
 TARGET_LINK_LIBRARIES (${PROJECT_NAME} ${GLEW_LIBRARIES})
 TARGET_LINK_LIBRARIES (${PROJECT_NAME} ${GLUT_LIBRARIES})
+TARGET_LINK_LIBRARIES (${PROJECT_NAME} boost_timer)
+TARGET_LINK_LIBRARIES (${PROJECT_NAME} boost_system) # Timer requires that
