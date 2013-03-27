@@ -62,7 +62,7 @@ template<typename T>
 struct PointMutableTraits {
         typedef typename PointTraits <T>::CoordinateType CoordinateType;
 
-        static inline void set (const T& point, PointCoordinate orient, CoordinateType c)
+        static inline void set (T& point, PointCoordinate orient, CoordinateType c)
         {
                 return point.set (orient, c);
         }

@@ -13,43 +13,52 @@
 #include <math.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-#include "math_3d.h"
+#include <fstream>
+#include <iostream>
 #include "Point.h"
 #include "Triangle.h"
-#include "delaunay/DelaunayTriangulation.h"
+#include "TriangulationAdapter.h"
 
 GLuint VBO;
-GLuint gWorldLocation;
+GLuint IBO;
 
-static const char* pVS = "                                                          \n\
-#version 330                                                                        \n\
+GLuint gWorldLocation;
+GLuint colorLocation;
+
+PointVector points;
+MyTriagulation::TriangleVector const *triangulation;
+
+double scale;
+
+static const char* pVS =
+"#version 110                                                                       \n\
                                                                                     \n\
-layout (location = 0) in vec3 Position;                                             \n\
+attribute vec2 Position;                                             \n\
                                                                                     \n\
 uniform mat4 gWorld;                                                                \n\
                                                                                     \n\
 void main()                                                                         \n\
 {                                                                                   \n\
-    gl_Position = gWorld * vec4(Position, 1.0);                                     \n\
+    gl_Position = gWorld * vec4(Position, 0.0, 1.0);                                     \n\
 }";
 
-static const char* pFS = "                                                          \n\
-#version 330                                                                        \n\
-                                                                                    \n\
-out vec4 FragColor;                                                                 \n\
-                                                                                    \n\
+static const char* pFS =
+"#version 110                                                                       \n\
+uniform vec4 color;                                 \n\
+                                                                          \n\
 void main()                                                                         \n\
 {                                                                                   \n\
-    FragColor = vec4(1.0, 0.0, 0.0, 1.0);                                           \n\
+    gl_FragColor = color;                                           \n\
 }";
+
+struct Matrix4f
+{
+    float m[4][4];
+};
 
 static void renderSceneCB()
 {
         glClear (GL_COLOR_BUFFER_BIT);
-
-        static float scale = 0.0f;
-
-        scale += 0.001f;
 
         Matrix4f world;
 
@@ -62,9 +71,21 @@ static void renderSceneCB()
 
         glEnableVertexAttribArray (0);
         glBindBuffer (GL_ARRAY_BUFFER, VBO);
-        glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-        glDrawArrays (GL_TRIANGLES, 0, 3);
+        // Blue - indexed - triangles produced by triangulation.
+        glUniform4f (colorLocation, 0, 0, 1, 0.2);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        glDrawElements (GL_TRIANGLES, triangulation->size () * 3, GL_UNSIGNED_INT, 0);
+
+        // Red - input polygon segments.
+        glUniform4f (colorLocation, 1, 0, 0, 1);
+        glDrawArrays (GL_LINE_LOOP, 0, points.size ());
+
+        // Green - input polygon points.
+        glUniform4f (colorLocation, 0, 1, 0, 1);
+        glPointSize (3);
+        glDrawArrays (GL_POINTS, 0, points.size ());
 
         glDisableVertexAttribArray (0);
 
@@ -77,16 +98,38 @@ static void initializeGlutCallbacks ()
         glutIdleFunc (renderSceneCB);
 }
 
-static void createVertexBuffer ()
+static void createVertexBuffer (const char *fileName)
 {
-        Vector3f vertices[3];
-        vertices[0] = Vector3f (-1.0f, -1.0f, 0.0f);
-        vertices[1] = Vector3f (1.0f, -1.0f, 0.0f);
-        vertices[2] = Vector3f (0.0f, 1.0f, 0.0f);
+        std::ifstream file (fileName);
+        file >> scale;
+        std::cerr << "Scale : " << scale << std::endl;
+
+        Point p;
+        while (file >> p.x >> p.y) {
+                points.push_back (p);
+        }
+
+/****************************************************************************/
+
+        MyTriagulation cdt (points);
+        cdt.constructDelaunay ();
+        triangulation = &cdt.getTriangulation ();
+
+/****************************************************************************/
 
         glGenBuffers (1, &VBO);
         glBindBuffer (GL_ARRAY_BUFFER, VBO);
-        glBufferData (GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glBufferData (GL_ARRAY_BUFFER, points.size () * sizeof (Point), &points.front (), GL_STATIC_DRAW);
+
+//        Triangle t;
+//        t.a = 0;
+//        t.b = 1;
+//        t.c = 5;
+//        triangles.push_back (t);
+
+        glGenBuffers (1, &IBO);
+        glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, IBO);
+        glBufferData (GL_ELEMENT_ARRAY_BUFFER, triangulation->size () * sizeof (Triangle), &triangulation->front (), GL_STATIC_DRAW);
 }
 
 static void addShader (GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
@@ -154,15 +197,31 @@ static void compileShaders ()
 
         gWorldLocation = glGetUniformLocation (ShaderProgram, "gWorld");
         assert(gWorldLocation != 0xFFFFFFFF);
+
+        colorLocation = glGetUniformLocation (ShaderProgram, "color");
+        assert(colorLocation != 0xFFFFFFFF);
 }
+
+
 
 int main (int argc, char** argv)
 {
+        if (argc <= 1) {
+                std::cerr << "Please provide an input file name." << std::endl;
+                exit (1);
+        }
+
         glutInit (&argc, argv);
         glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGBA);
-        glutInitWindowSize (1024, 768);
+//        glutInitWindowSize (1024, 768);
+        glutInitWindowSize (320, 200);
         glutInitWindowPosition (100, 100);
         glutCreateWindow ("Tutorial 08");
+
+//        TODO odkomentować.
+        glDisable (GL_CULL_FACE);
+//        glEnable (GL_CULL_FACE);
+//        glCullFace (GL_BACK);
 
         initializeGlutCallbacks ();
 
@@ -175,7 +234,7 @@ int main (int argc, char** argv)
 
         glClearColor (0.0f, 0.0f, 0.0f, 0.0f);
 
-        createVertexBuffer ();
+        createVertexBuffer (*(argv + 1));
 
         compileShaders ();
 
