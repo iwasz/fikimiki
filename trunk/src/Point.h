@@ -11,6 +11,7 @@
 
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>
+#include <vector>
 
 struct Point {
         float x;
@@ -20,5 +21,7 @@ struct Point {
 BOOST_STATIC_ASSERT (boost::has_trivial_assign <Point>::value);
 BOOST_STATIC_ASSERT (boost::has_trivial_copy <Point>::value);
 BOOST_STATIC_ASSERT (boost::is_pod <Point>::value);
+
+typedef std::vector <Point> PointVector;
 
 #endif /* POINT_H_ */

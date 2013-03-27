@@ -24,7 +24,6 @@ struct DelaunayTriangulationTraits {
 
         typedef TriangleTraits <TriangleType> TriangleTraitsType;
         typedef typename TriangleTraitsType::IndexType IndexType;
-
 };
 
 } // namespace Delaunay

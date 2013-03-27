@@ -451,7 +451,7 @@ void DelaunayIndex<Input, Traits>::findCrossingEdges (TriangleEdgeType const &ed
         }
 
         SideEnum commonEdgeNumber = intersections.get<1> ();
-        Triangle *next = start;
+        TriangleType *next = start;
 
         while (true) {
                 TriangleEdgeType commonEdge = getEdge (*next, commonEdgeNumber);
@@ -988,7 +988,7 @@ typename DelaunayIndex<Input, Traits>::TrianglePair DelaunayIndex<Input, Traits>
         std::cerr << "Edge : " << e << std::endl;
 #endif
         for (typename TrianglePtrVector::const_iterator i = triaglesA.begin (); i != triaglesA.end (); ++i) {
-                Triangle *t = *i;
+                TriangleType *t = *i;
 #if 0
                 std::cerr << "getTrForE : " << *t;
 #endif
