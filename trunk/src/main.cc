@@ -27,6 +27,7 @@ GLuint colorLocation;
 
 PointVector points;
 MyTriagulation::TriangleVector const *triangulation;
+MyTriagulation *cdt;
 
 double scale;
 
@@ -77,6 +78,7 @@ static void renderSceneCB()
         glUniform4f (colorLocation, 0, 0, 1, 0.2);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
         glDrawElements (GL_TRIANGLES, triangulation->size () * 3, GL_UNSIGNED_INT, 0);
+//        glDrawElements (GL_LINE_LOOP, triangulation->size () * 3, GL_UNSIGNED_INT, 0);
 
         // Red - input polygon segments.
         glUniform4f (colorLocation, 1, 0, 0, 1);
@@ -111,9 +113,10 @@ static void createVertexBuffer (const char *fileName)
 
 /****************************************************************************/
 
-        MyTriagulation cdt (points);
-        cdt.constructDelaunay ();
-        triangulation = &cdt.getTriangulation ();
+        cdt = new MyTriagulation (points);
+        cdt->constructDelaunay ();
+        triangulation = &cdt->getTriangulation ();
+        std::cerr << "\n" << triangulation->size () << std::endl;
 
 /****************************************************************************/
 
@@ -213,15 +216,13 @@ int main (int argc, char** argv)
 
         glutInit (&argc, argv);
         glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGBA);
-//        glutInitWindowSize (1024, 768);
+        glutInitWindowSize (1024, 768);
         glutInitWindowSize (320, 200);
-        glutInitWindowPosition (100, 100);
+//        glutInitWindowPosition (100, 100);
         glutCreateWindow ("Tutorial 08");
 
-//        TODO odkomentować.
-        glDisable (GL_CULL_FACE);
-//        glEnable (GL_CULL_FACE);
-//        glCullFace (GL_BACK);
+        glEnable (GL_CULL_FACE);
+        glCullFace (GL_BACK);
 
         initializeGlutCallbacks ();
 
