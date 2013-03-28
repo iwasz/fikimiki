@@ -30,9 +30,6 @@ struct TriangleEdge {
         bool operator== (TriangleEdge const &e) const { return a == e.a && b == e.b; }
         bool covers (TriangleEdge const &e) const { return (a == e.a && b == e.b) || (a == e.b && b == e.a); }
 
-        // TODO private
-//private:
-
         IndexType a, b;
 };
 

@@ -28,7 +28,8 @@ struct point_traits<Point> {
 
         static inline coordinate_type get (const Point& point, orientation_2d orient)
         {
-                return (orient == HORIZONTAL) ? boost::math::iround (point.x) : boost::math::iround (point.y);
+                // TODO This 1000 factor is arbitrary - consider other options.
+                return (orient == HORIZONTAL) ? boost::math::iround (point.x * 1000) : boost::math::iround (point.y * 1000);
         }
 };
 
