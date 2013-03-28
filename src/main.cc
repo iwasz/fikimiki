@@ -30,26 +30,27 @@ MyTriagulation::TriangleVector const *triangulation;
 MyTriagulation *cdt;
 
 double scale;
+Point translation;
 
 static const char* pVS =
 "#version 110                                                                       \n\
                                                                                     \n\
-attribute vec2 Position;                                             \n\
+attribute vec2 Position;                                                            \n\
                                                                                     \n\
 uniform mat4 gWorld;                                                                \n\
                                                                                     \n\
 void main()                                                                         \n\
 {                                                                                   \n\
-    gl_Position = gWorld * vec4(Position, 0.0, 1.0);                                     \n\
+    gl_Position = gWorld * vec4(Position, 0.0, 1.0);                                \n\
 }";
 
 static const char* pFS =
 "#version 110                                                                       \n\
-uniform vec4 color;                                 \n\
-                                                                          \n\
+uniform vec4 color;                                                                 \n\
+                                                                                    \n\
 void main()                                                                         \n\
 {                                                                                   \n\
-    gl_FragColor = color;                                           \n\
+    gl_FragColor = color;                                                           \n\
 }";
 
 struct Matrix4f
@@ -63,10 +64,10 @@ static void renderSceneCB()
 
         Matrix4f world;
 
-        world.m[0][0] = sinf(scale) ; world.m[0][1] = 0.0f       ; world.m[0][2] = 0.0f;        world.m[0][3] = 0.0f;
-        world.m[1][0] = 0.0f        ; world.m[1][1] = sinf(scale); world.m[1][2] = 0.0f;        world.m[1][3] = 0.0f;
-        world.m[2][0] = 0.0f;       ; world.m[2][1] = 0.0f;      ; world.m[2][2] = sinf(scale); world.m[2][3] = 0.0f;
-        world.m[3][0] = 0.0f;       ; world.m[3][1] = 0.0f;      ; world.m[3][2] = 0.0f;        world.m[3][3] = 1.0f;
+        world.m[0][0] = scale;        world.m[0][1] = 0.0f;       world.m[0][2] = 0.0f;        world.m[0][3] = translation.x;
+        world.m[1][0] = 0.0f;         world.m[1][1] = scale;      world.m[1][2] = 0.0f;        world.m[1][3] = translation.y;
+        world.m[2][0] = 0.0f;         world.m[2][1] = 0.0f;       world.m[2][2] = scale;       world.m[2][3] = 0.0f;
+        world.m[3][0] = 0.0f;         world.m[3][1] = 0.0f;       world.m[3][2] = 0.0f;        world.m[3][3] = 1.0f;
 
         glUniformMatrix4fv (gWorldLocation, 1, GL_TRUE, &world.m[0][0]);
 
@@ -75,10 +76,19 @@ static void renderSceneCB()
         glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
         // Blue - indexed - triangles produced by triangulation.
-        glUniform4f (colorLocation, 0, 0, 1, 0.2);
+        glUniform4f (colorLocation, 0, 0, 1, 0.4);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
         glDrawElements (GL_TRIANGLES, triangulation->size () * 3, GL_UNSIGNED_INT, 0);
-//        glDrawElements (GL_LINE_LOOP, triangulation->size () * 3, GL_UNSIGNED_INT, 0);
+
+        glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+
+        // Magenta - indexed - triangles produced by triangulation.
+        glUniform4f (colorLocation, 1, 0, 1, 1);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        glDrawElements (GL_TRIANGLES, triangulation->size () * 3, GL_UNSIGNED_INT, 0);
+
+        glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+
 
         // Red - input polygon segments.
         glUniform4f (colorLocation, 1, 0, 0, 1);
@@ -106,29 +116,25 @@ static void createVertexBuffer (const char *fileName)
         file >> scale;
         std::cerr << "Scale : " << scale << std::endl;
 
+        file >> translation.x >> translation.y;
+        std::cerr << "Translation : " << translation.x << "," << translation.y << std::endl;
+
         Point p;
         while (file >> p.x >> p.y) {
                 points.push_back (p);
         }
 
-/****************************************************************************/
+/*--------------------------------------------------------------------------*/
 
         cdt = new MyTriagulation (points);
         cdt->constructDelaunay ();
         triangulation = &cdt->getTriangulation ();
-        std::cerr << "\n" << triangulation->size () << std::endl;
 
-/****************************************************************************/
+/*--------------------------------------------------------------------------*/
 
         glGenBuffers (1, &VBO);
         glBindBuffer (GL_ARRAY_BUFFER, VBO);
         glBufferData (GL_ARRAY_BUFFER, points.size () * sizeof (Point), &points.front (), GL_STATIC_DRAW);
-
-//        Triangle t;
-//        t.a = 0;
-//        t.b = 1;
-//        t.c = 5;
-//        triangles.push_back (t);
 
         glGenBuffers (1, &IBO);
         glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, IBO);
@@ -216,13 +222,14 @@ int main (int argc, char** argv)
 
         glutInit (&argc, argv);
         glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGBA);
-        glutInitWindowSize (1024, 768);
+//        glutInitWindowSize (1024, 768);
         glutInitWindowSize (320, 200);
-//        glutInitWindowPosition (100, 100);
-        glutCreateWindow ("Tutorial 08");
+        glutCreateWindow ("fikimiki test");
 
         glEnable (GL_CULL_FACE);
         glCullFace (GL_BACK);
+        glEnable (GL_BLEND);
+        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         initializeGlutCallbacks ();
 
