@@ -10,9 +10,11 @@
 #define DELAUNAYTRIANGULATION_H_
 
 #include "DelaunayIndex.h"
-
 #include <boost/polygon/voronoi.hpp>
 #include <boost/math/special_functions/round.hpp>
+#include <vector>
+#include "DelaunayTriangle.h"
+#include "DelaunayPoint.h"
 #ifndef NDEBUG
 #include <boost/timer/timer.hpp>
 //#include <geometry/LineString.h>
@@ -39,10 +41,30 @@ struct triangulation_voronoi_diagram_traits {
         } vertex_equality_predicate_type;
 };
 
+
+
 /**
  *
  */
 typedef boost::polygon::voronoi_diagram<double, triangulation_voronoi_diagram_traits <double> > triangulation_voronoi_diagram;
+
+
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc = std::allocator,
+        template<typename> class ConstraintAlloc = std::allocator
+>
+struct InputCollection {
+
+        typedef PointArg PointType;
+        typedef TriangleArg TriangleType;
+        typedef PointList <PointType, typename PointAlloc> PointListType;
+        typedef ConstraintList ConstraintsListtType;
+
+};
 
 /**
  * TODO Zmienić nazwy plików - usunąć przedrostek Delaunay.
@@ -50,7 +72,10 @@ typedef boost::polygon::voronoi_diagram<double, triangulation_voronoi_diagram_tr
 template <
         typename PointArg = Point,
         typename TriangleArg = Triangle,
-        typename Input, /*typename ConstraintsList,*/ typename Traits = DelaunayTriangulationTraits<>
+        template<typename, typename> class PointList = std::vector,
+        template<typename, typename> class ConstraintList = std::vector,
+        template<typename> class PointAlloc = std::allocator,
+        template<typename> class ConstraintAlloc = std::allocator
 >
 class DelaunayTriangulation {
 public:
