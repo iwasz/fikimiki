@@ -15,6 +15,7 @@
 #include <vector>
 #include "DelaunayTriangle.h"
 #include "DelaunayPoint.h"
+#include "InputCollection.h"
 #ifndef NDEBUG
 #include <boost/timer/timer.hpp>
 //#include <geometry/LineString.h>
@@ -49,23 +50,6 @@ struct triangulation_voronoi_diagram_traits {
 typedef boost::polygon::voronoi_diagram<double, triangulation_voronoi_diagram_traits <double> > triangulation_voronoi_diagram;
 
 
-template <
-        typename PointArg,
-        typename TriangleArg,
-        template<typename, typename> class PointList,
-        template<typename, typename> class ConstraintList,
-        template<typename> class PointAlloc = std::allocator,
-        template<typename> class ConstraintAlloc = std::allocator
->
-struct InputCollection {
-
-        typedef PointArg PointType;
-        typedef TriangleArg TriangleType;
-        typedef PointList <PointType, typename PointAlloc> PointListType;
-        typedef ConstraintList ConstraintsListtType;
-
-};
-
 /**
  * TODO Zmienić nazwy plików - usunąć przedrostek Delaunay.
  */
@@ -80,7 +64,7 @@ template <
 class DelaunayTriangulation {
 public:
 
-        typedef Input InputCollectionType;
+        typedef InputCollection <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc> InputCollectionType;
         typedef DelaunayIndex <Input, Traits> DelaunayIndexType;
         typedef typename DelaunayIndexType::PointType PointType;
         typedef typename DelaunayIndexType::PointTraitsType PointTraitsType;
@@ -142,7 +126,14 @@ private:
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
 void DelaunayTriangulation<Input, Traits>::constructDelaunay (/*Geometry::LineString *crossing*/)
 {
         makeVoronoiDual ();

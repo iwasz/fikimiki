@@ -14,7 +14,7 @@
 #include "DelaunayEdge.h"
 #include "DelaunayTriangleEdge.h"
 #include "DelaunayTraits.h"
-#include <vector>
+#include "InputCollection.h"
 #include <list>
 #include <boost/tuple/tuple.hpp>
 #include <map>
@@ -25,15 +25,25 @@ namespace Delaunay {
  * This is mutable, R/W index, thus most of ots methods are non const. It is meant to be a private
  * implementation detail not accessible to user.
  */
-template <typename Input, typename Traits = DelaunayTriangulationTraits <> >
+template <
+        typename PointArg = Point,
+        typename TriangleArg = Triangle,
+        template<typename, typename> class PointList = std::vector,
+        template<typename, typename> class ConstraintList = std::vector,
+        template<typename> class PointAlloc = std::allocator,
+        template<typename> class ConstraintAlloc = std::allocator
+>
 class DelaunayIndex {
 public:
 
-        typedef typename Traits::PointType PointType;
+        typedef PointArg PointType;
+        typedef TriangleArg TriangleType;
+        typedef PointList <PointArg, PointAlloc <PointArg> > PointListType;
+        typedef ConstraintList <PointListType, ConstraintAlloc <PointListType> > ConstraintListType;
+        typedef InputCollection <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc> InputCollectionType;
         typedef PointTraits<PointType> PointTraitsType;
         typedef typename PointTraitsType::CoordinateType CoordinateType;
         typedef Edge <PointType> EdgeType;
-        typedef typename Traits::TriangleType TriangleType;
         typedef TriangleTraits <TriangleType> TriangleTraitsType;
         typedef typename TriangleTraitsType::IndexType IndexType;
         typedef TriangleEdge<TriangleType> TriangleEdgeType;
@@ -93,7 +103,7 @@ public:
 
 //        typedef std::vector <HalfEdgeNode> HalfEdgeIndex;
 
-        DelaunayIndex (Input const &i) : input (i)
+        DelaunayIndex (InputCollectionType const &i) : input (i)
         {
                 triangleIndex.resize (input.size ());
                 // TODO ***KRYTYCZNE*** ustawić tu tyle ile ma być. Da się to wyliczyć na początku!?
@@ -316,7 +326,7 @@ private:
 private:
 
         // Input points.
-        Input const &input;
+        InputCollectionType const &input;
         // Adjacency list - points -> triangles.
         TriangleIndex triangleIndex;
         // Triangles in triangulation in random order.
@@ -337,9 +347,16 @@ private:
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-typename DelaunayIndex <Input, Traits>::TriangleType *
-DelaunayIndex <Input, Traits>::getAdjacentTriangle (TriangleType const &t, SideEnum side)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+typename DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::TriangleType *
+DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::getAdjacentTriangle (TriangleType const &t, SideEnum side)
 {
         AdjacentTriangles &at = adjacentTrianglesIndex[&t];
 
@@ -356,8 +373,17 @@ DelaunayIndex <Input, Traits>::getAdjacentTriangle (TriangleType const &t, SideE
 
 }
 
-template <typename Input, typename Traits>
-void DelaunayIndex <Input, Traits>::setAdjacentTriangle (TriangleType &t, SideEnum s, TriangleType *a)
+/****************************************************************************/
+
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::setAdjacentTriangle (TriangleType &t, SideEnum s, TriangleType *a)
 {
         AdjacentTriangles &at = adjacentTrianglesIndex[&t];
 
@@ -378,9 +404,16 @@ void DelaunayIndex <Input, Traits>::setAdjacentTriangle (TriangleType &t, SideEn
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-typename DelaunayIndex<Input, Traits>::IntersectionInfo
-DelaunayIndex<Input, Traits>::intersects (TriangleType const &t, EdgeType const &e) const
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+typename DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::IntersectionInfo
+DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::intersects (TriangleType const &t, EdgeType const &e) const
 {
         IntersectionInfo ret;
 
@@ -422,8 +455,15 @@ DelaunayIndex<Input, Traits>::intersects (TriangleType const &t, EdgeType const 
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayIndex<Input, Traits>::findCrossingEdges (TriangleEdgeType const &edge, TriangleEdgeList *crossingEdges, TrianglePtrVector *crossingTriangles)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::findCrossingEdges (TriangleEdgeType const &edge, TriangleEdgeList *crossingEdges, TrianglePtrVector *crossingTriangles)
 {
         TrianglePtrVector const &incidentTriangles = triangleIndex[edge.a];
         EdgeType e = triangleEdgeToEdge (edge);
@@ -489,8 +529,15 @@ void DelaunayIndex<Input, Traits>::findCrossingEdges (TriangleEdgeType const &ed
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-bool DelaunayIndex<Input, Traits>::twoTrianglesConvex (TriangleEdgeType const &firstDiagonal/*, TriangleType const &a, TriangleType const &b*/) const
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+bool DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::twoTrianglesConvex (TriangleEdgeType const &firstDiagonal/*, TriangleType const &a, TriangleType const &b*/) const
 {
         ConstTrianglePair pair = getTrianglesForEdge (firstDiagonal);
         TriangleType const *a = pair.first;
@@ -511,8 +558,15 @@ bool DelaunayIndex<Input, Traits>::twoTrianglesConvex (TriangleEdgeType const &f
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-bool DelaunayIndex<Input, Traits>::pointInCircumcircle (TriangleType const &triangle, IndexType point) const
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+bool DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::pointInCircumcircle (TriangleType const &triangle, IndexType point) const
 {
         PointType const &ta = input[a (triangle)];
         PointType const &tb = input[b (triangle)];
@@ -541,8 +595,15 @@ bool DelaunayIndex<Input, Traits>::pointInCircumcircle (TriangleType const &tria
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-bool DelaunayIndex<Input, Traits>::twoTrianglesNotDelaunay (TriangleEdgeType const &firstDiagonal) const
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+bool DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::twoTrianglesNotDelaunay (TriangleEdgeType const &firstDiagonal) const
 {
         ConstTrianglePair pair = getTrianglesForEdge (firstDiagonal);
         TriangleType const *a = pair.first;
@@ -556,8 +617,15 @@ bool DelaunayIndex<Input, Traits>::twoTrianglesNotDelaunay (TriangleEdgeType con
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayIndex<Input, Traits>::addTriangle (IndexType index, TriangleType *triangle)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::addTriangle (IndexType index, TriangleType *triangle)
 {
         assert (getTriangleIndexSize () > index);
         triangleIndex[index].push_back (triangle);
@@ -565,8 +633,15 @@ void DelaunayIndex<Input, Traits>::addTriangle (IndexType index, TriangleType *t
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayIndex<Input, Traits>::addTriangle (TriangleType &triangle)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::addTriangle (TriangleType &triangle)
 {
         sortTriangle (triangle);
         triangulation.push_back (triangle);
@@ -581,8 +656,15 @@ void DelaunayIndex<Input, Traits>::addTriangle (TriangleType &triangle)
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayIndex<Input, Traits>::sortTriangle (TriangleType &triangle)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::sortTriangle (TriangleType &triangle)
 {
         IndexType t1 = a (triangle);
         IndexType t2 = b (triangle);
@@ -605,8 +687,15 @@ void DelaunayIndex<Input, Traits>::sortTriangle (TriangleType &triangle)
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayIndex<Input, Traits>::sortEdgeIndex ()
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::sortEdgeIndex ()
 {
         IndexType a = 0;
         for (typename TriangleIndex::iterator i = triangleIndex.begin (), e = triangleIndex.end (); i != e; ++i, ++a) {
@@ -908,8 +997,15 @@ void DelaunayIndex<Input, Traits>::topologicalSort (HalfEdgeNode &node, IndexTyp
  *     bottom
  *
  */
-template <typename Input, typename Traits>
-void DelaunayIndex<Input, Traits>::flip (TriangleEdgeType const &oldDiagonal, TriangleEdgeType *newDiagonal)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::flip (TriangleEdgeType const &oldDiagonal, TriangleEdgeType *newDiagonal)
 {
         TrianglePair pair = getTrianglesForEdge (oldDiagonal);
         TriangleType *top = pair.first;
@@ -964,8 +1060,16 @@ void DelaunayIndex<Input, Traits>::flip (TriangleEdgeType const &oldDiagonal, Tr
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-typename DelaunayIndex<Input, Traits>::TrianglePair DelaunayIndex<Input, Traits>::getTrianglesForEdge (TriangleEdgeType const &e)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+typename DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::TrianglePair
+DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::getTrianglesForEdge (TriangleEdgeType const &e)
 {
 #if 0
         TrianglePtrVector &trianglesForIndex = triangleIndex[e.a];
@@ -1021,8 +1125,15 @@ typename DelaunayIndex<Input, Traits>::TrianglePair DelaunayIndex<Input, Traits>
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayIndex<Input, Traits>::setVertex (TriangleType &t, SideEnum s, IndexType v)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::setVertex (TriangleType &t, SideEnum s, IndexType v)
 {
         IndexType current = Delaunay::getVertex (t, s);
         TrianglePtrVector &triangles = triangleIndex[current];
@@ -1039,8 +1150,15 @@ void DelaunayIndex<Input, Traits>::setVertex (TriangleType &t, SideEnum s, Index
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayIndex<Input, Traits>::clean ()
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayIndex <PointArg, TriangleArg, PointList,ConstraintList, PointAlloc, ConstraintAlloc>::clean ()
 {
         triangulation.erase (std::remove_if (triangulation.begin (), triangulation.end (), TraingleRemovePredicate ()), triangulation.end ());
 }
