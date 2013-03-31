@@ -138,12 +138,7 @@ struct PointMutableTraits <typename ::Point> {
 
 } // namespace Delaunay
 
-struct MyTriangulationTraits {
-        typedef Point PointType;
-        typedef Triangle TriangleType;
-};
-
-typedef Delaunay::DelaunayTriangulation <PointVector, MyTriangulationTraits> MyTriagulation;
+typedef Delaunay::DelaunayTriangulation <Point, Triangle> MyTriagulation;
 typedef MyTriagulation::TriangleVector TriangleVector;
 
 #endif /* TRIANGULATIONADAPTER_H_ */

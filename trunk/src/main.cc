@@ -15,9 +15,9 @@
 #include <GL/freeglut.h>
 #include <fstream>
 #include <iostream>
+#include "TriangulationAdapter.h"
 #include "Point.h"
 #include "Triangle.h"
-#include "TriangulationAdapter.h"
 
 GLuint VBO;
 GLuint IBO;
@@ -126,7 +126,9 @@ static void createVertexBuffer (const char *fileName)
 
 /*--------------------------------------------------------------------------*/
 
-        cdt = new MyTriagulation (points);
+        cdt = new MyTriagulation ();
+        cdt->setPoints (points);
+//        cdt->addConstraint (c);
         cdt->constructDelaunay ();
         triangulation = &cdt->getTriangulation ();
 
