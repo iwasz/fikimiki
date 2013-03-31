@@ -65,12 +65,14 @@ class DelaunayTriangulation {
 public:
 
         typedef InputCollection <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc> InputCollectionType;
-        typedef DelaunayIndex <Input, Traits> DelaunayIndexType;
-        typedef typename DelaunayIndexType::PointType PointType;
+        typedef DelaunayIndex <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc> DelaunayIndexType;
+        typedef PointArg PointType;
+        typedef TriangleArg TriangleType;
+        typedef PointList <PointArg, PointAlloc <PointArg> > PointListType;
+        typedef ConstraintList <PointListType, ConstraintAlloc <PointListType> > ConstraintListType;
         typedef typename DelaunayIndexType::PointTraitsType PointTraitsType;
         typedef typename DelaunayIndexType::CoordinateType CoordinateType;
         typedef typename DelaunayIndexType::EdgeType EdgeType;
-        typedef typename DelaunayIndexType::TriangleType TriangleType;
         typedef typename DelaunayIndexType::TriangleTraitsType TriangleTraitsType;
         typedef typename DelaunayIndexType::IndexType IndexType;
         typedef typename DelaunayIndexType::TriangleEdgeType TriangleEdgeType;
@@ -85,7 +87,7 @@ public:
 
         enum LineMode { LINES, LINE_LOOP };
 
-        DelaunayTriangulation (Input const &i) : input (i), index (i) {}
+        DelaunayTriangulation () : index (input) {}
 
         void constructDelaunay (/*Geometry::LineString *crossing*/);
 
@@ -94,6 +96,9 @@ public:
         void findMissingConstraints (InputCollectionType const &allConstraints, TriangleEdgeList *missingConstraints, LineMode lineMode = LINE_LOOP);
 
         TriangleVector const &getTriangulation () const { return index.getTriangulation (); }
+
+        void setPoints (PointListType const &p) {}
+        void addConstraint (PointListType const &p) {}
 
 private:
 
@@ -119,7 +124,7 @@ private:
 
 private:
 
-        InputCollectionType const &input;
+        InputCollectionType input;
         DelaunayIndexType index;
         triangulation_voronoi_diagram vd;
 };
@@ -134,7 +139,7 @@ template <
         template<typename> class PointAlloc,
         template<typename> class ConstraintAlloc
 >
-void DelaunayTriangulation<Input, Traits>::constructDelaunay (/*Geometry::LineString *crossing*/)
+void DelaunayTriangulation<PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc>::constructDelaunay (/*Geometry::LineString *crossing*/)
 {
         makeVoronoiDual ();
         linkTriangles ();
@@ -278,8 +283,15 @@ void DelaunayTriangulation<Input, Traits>::constructDelaunay (/*Geometry::LineSt
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayTriangulation <Input, Traits>::makeVoronoiDual ()
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayTriangulation <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc>::makeVoronoiDual ()
 {
 #ifndef NDEBUG
         boost::timer::cpu_timer t0;
@@ -287,7 +299,12 @@ void DelaunayTriangulation <Input, Traits>::makeVoronoiDual ()
 
         // construct_voronoi (input.begin (), input.end (), &vd);
         boost::polygon::default_voronoi_builder builder;
-        boost::polygon::insert (input.begin (), input.end (), &builder);
+
+        PointListType const &points = input.getPoints ();
+        boost::polygon::insert (points.begin (), points.end (), &builder);
+
+
+
         builder.construct (&vd);
 
 #ifndef NDEBUG
@@ -337,8 +354,15 @@ void DelaunayTriangulation <Input, Traits>::makeVoronoiDual ()
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayTriangulation <Input, Traits>::linkTriangles ()
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayTriangulation <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc>::linkTriangles ()
 {
         // 2. Link triangles.
         for (triangulation_voronoi_diagram::const_vertex_iterator it = vd.vertices ().begin (); it != vd.vertices ().end (); ++it) {
@@ -385,8 +409,15 @@ void DelaunayTriangulation <Input, Traits>::linkTriangles ()
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-void DelaunayTriangulation <Input, Traits>::findMissingConstraints (InputCollectionType const &allConstraints, TriangleEdgeList *missingConstraints, LineMode lineMode)
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+void DelaunayTriangulation <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc>::findMissingConstraints (InputCollectionType const &allConstraints, TriangleEdgeList *missingConstraints, LineMode lineMode)
 {
         // 3. Find missing constraints. Update triangleVector (data structure for CDT).
         /*
@@ -433,8 +464,15 @@ void DelaunayTriangulation <Input, Traits>::findMissingConstraints (InputCollect
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-bool DelaunayTriangulation <Input, Traits>::diagonalInside (PointType const &a, PointType const &ap, PointType const &an, PointType const &b) const
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+bool DelaunayTriangulation <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc>::diagonalInside (PointType const &a, PointType const &ap, PointType const &an, PointType const &b) const
 {
         int apx = ap.x - a.x;
         int apy = ap.y - a.y;
@@ -452,8 +490,15 @@ bool DelaunayTriangulation <Input, Traits>::diagonalInside (PointType const &a, 
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-bool DelaunayTriangulation <Input, Traits>::diagonalInside (TriangleEdgeType const &e) const
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+bool DelaunayTriangulation <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc>::diagonalInside (TriangleEdgeType const &e) const
 {
         // If e is one of constraints, we don't need to perform furher computations.
         if (std::abs (e.a - e.b) == 1) {
@@ -471,8 +516,15 @@ bool DelaunayTriangulation <Input, Traits>::diagonalInside (TriangleEdgeType con
 
 /****************************************************************************/
 
-template <typename Input, typename Traits>
-bool DelaunayTriangulation <Input, Traits>::triangleInside (TriangleType const &t) const
+template <
+        typename PointArg,
+        typename TriangleArg,
+        template<typename, typename> class PointList,
+        template<typename, typename> class ConstraintList,
+        template<typename> class PointAlloc,
+        template<typename> class ConstraintAlloc
+>
+bool DelaunayTriangulation <PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc>::triangleInside (TriangleType const &t) const
 {
         for (int i = 1; i <= 3; ++i) {
                 if (!diagonalInside (getEdge (t, static_cast <SideEnum> (i)))) {
