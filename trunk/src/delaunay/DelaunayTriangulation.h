@@ -97,8 +97,11 @@ public:
 
         TriangleVector const &getTriangulation () const { return index.getTriangulation (); }
 
-        void setPoints (PointListType const &p) {}
-        void addConstraint (PointListType const &p) {}
+        void setPoints (PointListType const &p) { input.setPoints (p); }
+        void addConstraint (PointListType const &p) { return input.getPoints (); }
+
+//        void addConstraint (PointListType const &p) { input.addConstraint (p); }
+//        ConstraintListType const &getConstraints () const { return constraints; }
 
 private:
 
@@ -141,6 +144,7 @@ template <
 >
 void DelaunayTriangulation<PointArg, TriangleArg, PointList, ConstraintList, PointAlloc, ConstraintAlloc>::constructDelaunay (/*Geometry::LineString *crossing*/)
 {
+        index.reserve ();
         makeVoronoiDual ();
         linkTriangles ();
 
@@ -303,7 +307,10 @@ void DelaunayTriangulation <PointArg, TriangleArg, PointList, ConstraintList, Po
         PointListType const &points = input.getPoints ();
         boost::polygon::insert (points.begin (), points.end (), &builder);
 
-
+//        ConstraintListType const &constraints = input.getConstraints ();
+//        for (typename ConstraintListType::const_iterator i = constraints.begin (), e = constraints.end (); i != e; ++i) {
+//                PointListType const &constraint = *i;
+//        }
 
         builder.construct (&vd);
 

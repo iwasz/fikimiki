@@ -35,8 +35,10 @@ public:
         void addConstraint (PointListType const &p) { constraints.push_back (&p); }
         ConstraintListType const &getConstraints () const { return constraints; }
 
-        PointType &operator[] (size_t i);
-        PointType const &operator[] (size_t i) const;
+        PointType &operator[] (size_t i) { return points->operator[] (i); }
+        PointType const &operator[] (size_t i) const { return points->operator[] (i); }
+
+        size_t size () const { return points->size (); }
 
 private:
 

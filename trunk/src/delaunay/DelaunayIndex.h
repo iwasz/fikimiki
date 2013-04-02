@@ -105,10 +105,14 @@ public:
 
         DelaunayIndex (InputCollectionType const &i) : input (i)
         {
-//                triangleIndex.resize (input.size ());
-//                // TODO ***KRYTYCZNE*** ustawić tu tyle ile ma być. Da się to wyliczyć na początku!?
-//                triangulation.reserve (input.size () * 10);
-////                adjacentTrianglesIndex.reserve (triangulation.size ());
+        }
+
+        void reserve ()
+        {
+                triangleIndex.resize (input.size ());
+                // TODO ***KRYTYCZNE*** ustawić tu tyle ile ma być. Da się to wyliczyć na początku!?
+                triangulation.reserve (input.size () * 10);
+//                adjacentTrianglesIndex.reserve (triangulation.size ());
         }
 
         TriangleVector const &getTriangulation () const { return triangulation; }
