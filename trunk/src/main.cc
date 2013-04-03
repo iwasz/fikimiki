@@ -128,7 +128,19 @@ static void createVertexBuffer (const char *fileName)
 
         cdt = new MyTriagulation ();
         cdt->setPoints (points);
-//        cdt->addConstraint (c);
+
+        MyTriagulation::PointListType constraint;
+        p.x = -2, p.y = 2;
+        constraint.push_back (p);
+        p.x = -2, p.y = 4;
+        constraint.push_back (p);
+        p.x = 2, p.y = 4;
+        constraint.push_back (p);
+        p.x = 2, p.y = 2;
+        constraint.push_back (p);
+//        cdt->addConstraint (constraint);
+
+
         cdt->constructDelaunay ();
         triangulation = &cdt->getTriangulation ();
 

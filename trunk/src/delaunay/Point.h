@@ -130,7 +130,7 @@ struct point_traits<Delaunay::Point> {
         typedef DelaunayPointTraitsType::IntCoordinateType coordinate_type;
 
         /*
-         * TODO sprawdzić jak często to się wykonuje i skąd. Jak tylko w kroku inicjacji, to OK.
+         * (ok 2*n) Sprawdzić jak często to się wykonuje i skąd. Jak tylko w kroku inicjacji, to OK.
          * Dał bym tutaj też mnożnik, żeby uniknąć sytuacji, kiedy dwa zmiennoprzecinkowe punkty
          * wejściowe, które są bardzo blisko siebie zostaną przez poniższy get zwróceone jako
          * ten sam punkt. Można albo mnożyć przez stała (np 1000), albo znaleźć najmniejszą różnicę

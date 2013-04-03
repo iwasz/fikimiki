@@ -9,7 +9,7 @@
 #ifndef TRIANGULATIONADAPTER_H_
 #define TRIANGULATIONADAPTER_H_
 
-#include "delaunay/DelaunayTriangulation.h"
+#include "delaunay/Triangulation.h"
 #include "Point.h"
 #include "Triangle.h"
 
@@ -138,7 +138,7 @@ struct PointMutableTraits <typename ::Point> {
 
 } // namespace Delaunay
 
-typedef Delaunay::DelaunayTriangulation <Point, Triangle> MyTriagulation;
+typedef Delaunay::Triangulation <Point, Triangle> MyTriagulation;
 typedef MyTriagulation::TriangleVector TriangleVector;
 
 #endif /* TRIANGULATIONADAPTER_H_ */
