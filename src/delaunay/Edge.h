@@ -9,7 +9,7 @@
 #ifndef DELAUNAYEDGE_H_
 #define DELAUNAYEDGE_H_
 
-#include "DelaunayPoint.h"
+#include "Point.h"
 
 namespace Delaunay {
 

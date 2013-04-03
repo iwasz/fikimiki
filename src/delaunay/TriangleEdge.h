@@ -9,7 +9,7 @@
 #ifndef DELAUNAYTRIANGLEEDGE_H_
 #define DELAUNAYTRIANGLEEDGE_H_
 
-#include "DelaunayTriangle.h"
+#include "Triangle.h"
 
 #ifndef NDEBUG
 #include <iosfwd>
