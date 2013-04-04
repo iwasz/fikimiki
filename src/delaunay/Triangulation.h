@@ -63,7 +63,7 @@ public:
         typedef typename Traits::PointType PointType;
         typedef typename Traits::TriangleType TriangleType;
         typedef typename Traits::PointListType PointListType;
-        typedef typename Traits::ConstraintListType ConstraintListType;
+        typedef typename Traits::PointListCollectionType PointListCollectionType;
         typedef typename Traits::PointTraitsType PointTraitsType;
         typedef typename Traits::CoordinateType CoordinateType;
         typedef typename Traits::EdgeType EdgeType;
@@ -96,7 +96,9 @@ public:
         PointListType const &getPoints () const { return input.getPoints (); }
 
         void addConstraint (PointListType const &p) { input.addConstraint (p); }
-        ConstraintListType const &getConstraints () const { return input.getConstraints (); }
+        PointListCollectionType const &getConstraints () const { return input.getConstraints (); }
+
+        size_t getDataSize () const { return input.size (); }
 
 private:
 
@@ -143,6 +145,7 @@ void Triangulation<PointArg, TriangleArg, PointList>::constructDelaunay (/*Geome
         TriangleEdgeList missingConstraints;
         findMissingConstraints (input, &missingConstraints);
 
+#if 1
         // 4. Add missing segments.
         for (typename TriangleEdgeList::const_iterator i = missingConstraints.begin (); i != missingConstraints.end (); ++i) {
                 TriangleEdgeType const &missingConstraint = *i;
@@ -276,6 +279,7 @@ void Triangulation<PointArg, TriangleArg, PointList>::constructDelaunay (/*Geome
         std::cerr << "CDT size : " << index.getNumTriangles () << " triangles." << std::endl;
 //        std::cout << triangulation << std::endl;
 #endif
+#endif
 }
 
 /****************************************************************************/
@@ -294,13 +298,10 @@ void Triangulation <PointArg, TriangleArg, PointList>::makeVoronoiDual ()
         // construct_voronoi (input.begin (), input.end (), &vd);
         boost::polygon::default_voronoi_builder builder;
 
-        PointListType const &points = input.getPoints ();
-        boost::polygon::insert (points.begin (), points.end (), &builder);
-
-        ConstraintListType const &constraints = input.getConstraints ();
-        for (typename ConstraintListType::const_iterator i = constraints.begin (), e = constraints.end (); i != e; ++i) {
-                PointListType const *constraint = *i;
-                boost::polygon::insert (constraint->begin (), constraint->end (), &builder);
+        PointListCollectionType const &pointsCollection = input.getPointsCollection ();
+        for (typename PointListCollectionType::const_iterator i = pointsCollection.begin (), e = pointsCollection.end (); i != e; ++i) {
+                PointListType const *pointList = *i;
+                boost::polygon::insert (pointList->begin (), pointList->end (), &builder);
         }
 
         builder.construct (&vd);
