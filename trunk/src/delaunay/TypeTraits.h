@@ -25,7 +25,7 @@ struct TypeTraits {
         typedef PointArg PointType;
         typedef TriangleArg TriangleType;
         typedef PointList PointListType;
-        typedef std::vector <PointListType const *> ConstraintListType;
+        typedef std::vector <PointListType const *> PointListCollectionType;
         typedef PointTraits<PointType> PointTraitsType;
         typedef typename PointTraitsType::CoordinateType CoordinateType;
         typedef Edge <PointType> EdgeType;

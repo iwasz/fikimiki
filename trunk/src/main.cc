@@ -97,7 +97,7 @@ static void renderSceneCB()
         // Green - input polygon points.
         glUniform4f (colorLocation, 0, 1, 0, 1);
         glPointSize (3);
-        glDrawArrays (GL_POINTS, 0, points.size ());
+        glDrawArrays (GL_POINTS, 0, cdt->getDataSize());
 
         glDisableVertexAttribArray (0);
 
@@ -138,8 +138,7 @@ static void createVertexBuffer (const char *fileName)
         constraint.push_back (p);
         p.x = 2, p.y = 2;
         constraint.push_back (p);
-//        cdt->addConstraint (constraint);
-
+        cdt->addConstraint (constraint);
 
         cdt->constructDelaunay ();
         triangulation = &cdt->getTriangulation ();
@@ -148,7 +147,9 @@ static void createVertexBuffer (const char *fileName)
 
         glGenBuffers (1, &VBO);
         glBindBuffer (GL_ARRAY_BUFFER, VBO);
-        glBufferData (GL_ARRAY_BUFFER, points.size () * sizeof (Point), &points.front (), GL_STATIC_DRAW);
+        glBufferData (GL_ARRAY_BUFFER, cdt->getDataSize () * sizeof (Point), NULL, GL_STATIC_DRAW);
+        glBufferSubData (GL_ARRAY_BUFFER, 0, points.size () * sizeof (Point), &points.front ());
+        glBufferSubData (GL_ARRAY_BUFFER, points.size () * sizeof (Point), constraint.size () * sizeof (Point), &constraint.front ());
 
         glGenBuffers (1, &IBO);
         glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, IBO);

@@ -37,7 +37,7 @@ public:
         typedef typename Traits::PointType PointType;
         typedef typename Traits::TriangleType TriangleType;
         typedef typename Traits::PointListType PointListType;
-        typedef typename Traits::ConstraintListType ConstraintListType;
+        typedef typename Traits::PointListCollectionType PointListCollectionType;
         typedef typename Traits::PointTraitsType PointTraitsType;
         typedef typename Traits::CoordinateType CoordinateType;
         typedef typename Traits::EdgeType EdgeType;
