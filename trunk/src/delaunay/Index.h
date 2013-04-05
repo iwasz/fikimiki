@@ -556,8 +556,8 @@ bool Index <PointArg, TriangleArg, PointList>::pointInCircumcircle (TriangleType
         PointType const &tc = input[c (triangle)];
         PointType const &tp = input[point];
 
-        double cosa = (ta.x - tc.x) * (tb.x - tc.x) + (ta.y - tc.y) * (tb.y - tc.y);
-        double cosb = (tb.x - tp.x) * (ta.x - tp.x) + (tb.y - tp.y) * (ta.y - tp.y);
+        double cosa = (getX (ta) - getX (tc)) * (getX (tb) - getX (tc)) + (getY (ta) - getY (tc)) * (getY (tb) - getY (tc));
+        double cosb = (getX (tb) - getX (tp)) * (getX (ta) - getX (tp)) + (getY (tb) - getY (tp)) * (getY (ta) - getY (tp));
 
         if (cosa >= 0 && cosb >= 0) {
                 return false;
@@ -567,7 +567,10 @@ bool Index <PointArg, TriangleArg, PointList>::pointInCircumcircle (TriangleType
                 return true;
         }
 
-        double sinab = ((ta.x - tc.x) * (tb.y - tc.y) - (tb.x - tc.x) * (ta.y - tc.y)) * cosb + ((tb.x - tp.x) * (ta.y - tp.y) - (ta.x - tp.x) * (tb.y - tp.y)) * cosa;
+        double sinab = ((getX (ta) - getX (tc)) * (getY (tb) - getY (tc)) -
+                        (getX (tb) - getX (tc)) * (getY (ta) - getY (tc))) * cosb +
+                       ((getX (tb) - getX (tp)) * (getY (ta) - getY (tp)) -
+                        (getX (ta) - getX (tp)) * (getY (tb) - getY (tp))) * cosa;
 
         if (sinab < 0) {
                 return true;

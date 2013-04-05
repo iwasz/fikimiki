@@ -29,7 +29,7 @@ struct point_traits<Point> {
         static inline coordinate_type get (const Point& point, orientation_2d orient)
         {
                 // TODO This 1000 factor is arbitrary - consider other options.
-                return (orient == HORIZONTAL) ? boost::math::iround (point.x * 1000) : boost::math::iround (point.y * 1000);
+                return (orient == HORIZONTAL) ? boost::math::iround (point.X * 1000) : boost::math::iround (point.Y * 1000);
         }
 };
 
@@ -105,7 +105,7 @@ struct PointTraits <typename ::Point> {
 
         static inline CoordinateType get (const typename ::Point& point, PointCoordinate orient)
         {
-                return ((orient == X) ? (point.x) : (point.y));
+                return ((orient == X) ? (point.X) : (point.Y));
         }
 };
 
@@ -116,10 +116,10 @@ struct PointMutableTraits <typename ::Point> {
         static inline void set (typename ::Point& point, PointCoordinate orient, CoordinateType c)
         {
                 if (orient == X) {
-                        point.x = c;
+                        point.X = c;
                 }
                 else {
-                        point.y = c;
+                        point.Y = c;
                 }
         }
 
@@ -130,8 +130,8 @@ struct PointMutableTraits <typename ::Point> {
         static inline typename ::Point construct (CoordinateType x = 0, CoordinateType y = 0)
         {
                 typename ::Point p;
-                p.x = x;
-                p.y = y;
+                p.X = x;
+                p.Y = y;
                 return p;
         }
 };

@@ -37,7 +37,8 @@ public:
         PointListType const &getPoints () const { return *pointsCollection.front (); }
 
         void addConstraint (PointListType const &p);
-        PointListType const &getConstraint (size_t i) const { return *pointsCollection[i + 1]; }
+        PointListType const &getConstraint (size_t i) const { return *pointsCollection[i]; }
+        size_t getConstraintOffset (size_t i) const;
 
         PointListCollectionType const &getPointsCollection () const { return pointsCollection; }
 
@@ -120,6 +121,22 @@ InputCollection <PointArg, TriangleArg, PointList>::operator[] (size_t i) const
         }
 
         return points->operator[] (j);
+}
+
+/****************************************************************************/
+
+template <
+        typename PointArg,
+        typename TriangleArg,
+        typename PointList
+>
+size_t InputCollection <PointArg, TriangleArg, PointList>::getConstraintOffset (size_t i) const
+{
+        if (!i) {
+                return 0;
+        }
+
+        return bounds[i - 1] + 1;
 }
 
 }

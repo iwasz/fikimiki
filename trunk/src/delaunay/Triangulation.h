@@ -80,15 +80,15 @@ public:
         typedef triangulation_voronoi_diagram::edge_type edge_type;
         typedef triangulation_voronoi_diagram::cell_type cell_type;
 
-        enum LineMode { LINES, LINE_LOOP };
-
         Triangulation () : index (input) {}
 
         void constructDelaunay (/*Geometry::LineString *crossing*/);
 
         void makeVoronoiDual ();
         void linkTriangles ();
-        void findMissingConstraints (InputCollectionType const &allConstraints, TriangleEdgeList *missingConstraints, LineMode lineMode = LINE_LOOP);
+        void findMissingConstraints (size_t constraintNumber, TriangleEdgeList *missingConstraints, bool closed = true);
+        void addMissingSegments (TriangleEdgeList const &missingSegments);
+        void removeSuperfulous (PointListType const &pointList, bool removeOutside = true);
 
         TriangleVector const &getTriangulation () const { return index.getTriangulation (); }
 
@@ -119,8 +119,8 @@ private:
                              PointType const& an,
                              PointType const& b) const;
 
-        bool diagonalInside (TriangleEdgeType const &e) const;
-        bool triangleInside (TriangleType const &t) const;
+        bool diagonalInside (TriangleEdgeType const &e, PointListType const &pointList) const;
+        bool triangleInside (TriangleType const &t, PointListType const &pointList) const;
 
 private:
 
@@ -143,142 +143,19 @@ void Triangulation<PointArg, TriangleArg, PointList>::constructDelaunay (/*Geome
         linkTriangles ();
 
         TriangleEdgeList missingConstraints;
-        findMissingConstraints (input, &missingConstraints);
+        findMissingConstraints (0, &missingConstraints);
+        addMissingSegments (missingConstraints);
+        removeSuperfulous (input.getPoints ());
 
-#if 1
-        // 4. Add missing segments.
-        for (typename TriangleEdgeList::const_iterator i = missingConstraints.begin (); i != missingConstraints.end (); ++i) {
-                TriangleEdgeType const &missingConstraint = *i;
-
-#if 0
-                if (missingConstraint.a != 460) {
-//                if (missingConstraint.a != 119) {
-                        continue;
-                }
-                std::cerr << "Missing constraint : " << missingConstraint << std::endl;
-#endif
-
-                TriangleEdgeList crossingEdges;
-                TrianglePtrVector crossingTriangles;
-
-                // Paragraph 2.
-                index.findCrossingEdges (missingConstraint, &crossingEdges, &crossingTriangles);
-
-#if 0
-                std::cerr << "Constraint " << missingConstraint << " crosses : " << crossingTriangles << std::endl;
-#endif
-
-#if 0
-                for (typename TrianglePtrVector::const_iterator i = crossingTriangles.begin (); i != crossingTriangles.end (); ++i) {
-                        Delaunay::Point const &a = input[Delaunay::a (**i)];
-                        Delaunay::Point const &b = input[Delaunay::b (**i)];
-                        Delaunay::Point const &c = input[Delaunay::c (**i)];
-
-                        crossing->push_back (Geometry::makePoint (a.x, a.y));
-                        crossing->push_back (Geometry::makePoint (b.x, b.y));
-                        crossing->push_back (Geometry::makePoint (c.x, c.y));
-                }
-#endif
-
-                // Paragraph 3.
-                TriangleEdgeList newEdges;
-                while (!crossingEdges.empty ()) {
-
-                        // Paragraph 3.1
-                        TriangleEdgeType currentCrossingEdge = crossingEdges.front ();
-                        crossingEdges.pop_front ();
-
-                        // Paragraph 3.2
-                        if (currentCrossingEdge.covers (TriangleEdgeType (549, 8)))
-                        if (!index.twoTrianglesConvex (currentCrossingEdge)) {
-                                crossingEdges.push_back (currentCrossingEdge);
-
-#if 0
-                                std::cerr << "####> !CONVEX" << std::endl;
-#endif
-
-                                if (crossingEdges.size () == 1) {
-                                        /*
-                                         * TODO Jeśli jest tylko jedna przecinająca dany constraint, to jeśli convex,
-                                         * to flip, a jeśli nie, to nie wiem, ale coś trzeba tu zrobić.
-                                         */
-                                        assert (0); // not implemented TODO - swoją drogą - to jest chyab niemożliwe (jeśli program dobrze działa)?!
-                                }
-
-                                continue;
-                        }
-
-#if 0
-                        std::cerr << "####> +++CONVEX" << std::endl;
-#endif
-                        // Dwa przyległę trójkąty zawierające e tworzą czworobok wypukły.
-                        TriangleEdgeType newDiagonal;
-
-                        /*
-                         * Tu trzeba
-                         * - uaktualnić wierzchołki trójkątów.
-                         * - uaktualnić ich zlinkowane trójkąty.
-                         * - uaktualnic triangleIndex (potrzebny w findCrossing edges).
-                         */
-                        index.flip (currentCrossingEdge, &newDiagonal);
-
-                        EdgeType a = index.triangleEdgeToEdge (missingConstraint);
-                        EdgeType b = index.triangleEdgeToEdge (newDiagonal);
-
-                        if (Delaunay::intersects (a, b)) {
-                                crossingEdges.push_back (newDiagonal);
-                        }
-                        else {
-                                newEdges.push_back (newDiagonal);
-                        }
-                }
-
-                // 4. Make CDT from DT.
-#if 0
-                std::cerr << newEdges.size () << std::endl;
-#endif
-                for (typename TriangleEdgeList::iterator i = newEdges.begin (); i != newEdges.end (); ++i) {
-                        TriangleEdgeType &newEdge = *i;
-
-                        if (newEdge.covers (missingConstraint)) {
-                                continue;
-                        }
-
-                        if (!index.twoTrianglesNotDelaunay (newEdge)) {
-                                TriangleEdgeType newDiagonal;
-                                index.flip (newEdge, &newDiagonal);
-
-                                // TODO w piśmie napsali, żeby ją zachowac w kolekcji nowych krawędzi - ale po co?
-                                newEdge = newDiagonal;
-                        }
-                }
-        }
-
-        // TODO z tego zrobić metodę i dać parametr czy CW czy CCW
-        // 5. Remove superfluous triangles.  Input must be in COUNTER CLOCKWISE order.
-        TriangleVector const &triangulation = index.getTriangulation ();
-
-        for (typename TriangleVector::const_iterator i = triangulation.begin (), e = triangulation.end (); i != e; ++i) {
-                TriangleType &triangle = const_cast <TriangleType &> (*i);
-
-                if (a (triangle) == 0 && b (triangle) == 0 && c (triangle) == 0) {
-                        continue;
-                }
-
-                if (!triangleInside (triangle)) {
-                        a (triangle, 0);
-                        b (triangle, 0);
-                        c (triangle, 0);
-                }
-        }
-
-        index.clean ();
+        missingConstraints.clear ();
+        findMissingConstraints (1, &missingConstraints);
+        addMissingSegments (missingConstraints);
+        removeSuperfulous (input.getConstraint (1), true);
 
 #if 0
         printlog ("Triangulation time (derived from voronoi as its dual) : %f ms", t1.elapsed ().wall / 1000000.0);
         std::cerr << "CDT size : " << index.getNumTriangles () << " triangles." << std::endl;
 //        std::cout << triangulation << std::endl;
-#endif
 #endif
 }
 
@@ -410,22 +287,21 @@ template <
         typename TriangleArg,
         typename PointList
 >
-void Triangulation <PointArg, TriangleArg, PointList>::findMissingConstraints (InputCollectionType const &allConstraints, TriangleEdgeList *missingConstraints, LineMode lineMode)
+void Triangulation <PointArg, TriangleArg, PointList>::findMissingConstraints (size_t constraintNumber, TriangleEdgeList *missingConstraints, bool closed)
 {
         // 3. Find missing constraints. Update triangleVector (data structure for CDT).
         /*
-         * TODO This is loop made for simple polygons (without holes). It is also possible to make
-         * loop for discrete list of constraints (that are not linked).
-         *
          * W tym kawałku chodzi o to, żeby znaleźć wszystkie constrainty. Szukamy w triangulacji
          * krawędzi o wierzchołkach [i, i+1]. Jeśli jakiegoś nie ma, to dodajemy go do listy
          * brakujących constraintów.
          */
+        PointListType const &allConstraints = input.getConstraint (constraintNumber);
         size_t inputSize = allConstraints.size ();
+        size_t constraintOffset = input.getConstraintOffset (constraintNumber);
 
-//        for (typename InputCollectionType::const_iterator it = allConstraints.begin (), e = allConstraints.end (); it != e; ++it) {
-        for (size_t i = 0; i < inputSize; ++i) {
-                size_t j = (i + 1) % inputSize;
+        for (size_t io = 0; io < inputSize - (size_t)(!closed); ++io) {
+                size_t i = io + constraintOffset;
+                size_t j = ((io + 1) % inputSize) + constraintOffset;
 
                 assert (index.getTriangleIndexSize () > i);
                 TrianglePtrVector const &trianglesForPoint = index.getTrianglesForPoint (i);
@@ -462,14 +338,162 @@ template <
         typename TriangleArg,
         typename PointList
 >
+void Triangulation <PointArg, TriangleArg, PointList>::addMissingSegments (TriangleEdgeList const &missingSegments)
+{
+        // 4. Add missing segments.
+        for (typename TriangleEdgeList::const_iterator i = missingSegments.begin (); i != missingSegments.end (); ++i) {
+                TriangleEdgeType const &missingConstraint = *i;
+
+#if 0
+                if (missingConstraint.a != 460) {
+//                if (missingConstraint.a != 119) {
+                        continue;
+                }
+                std::cerr << "Missing constraint : " << missingConstraint << std::endl;
+#endif
+
+                TriangleEdgeList crossingEdges;
+                TrianglePtrVector crossingTriangles;
+
+                // Paragraph 2.
+                index.findCrossingEdges (missingConstraint, &crossingEdges, &crossingTriangles);
+
+#if 0
+                std::cerr << "Constraint " << missingConstraint << " crosses : " << crossingTriangles << std::endl;
+#endif
+
+#if 0
+                for (typename TrianglePtrVector::const_iterator i = crossingTriangles.begin (); i != crossingTriangles.end (); ++i) {
+                        Delaunay::Point const &a = input[Delaunay::a (**i)];
+                        Delaunay::Point const &b = input[Delaunay::b (**i)];
+                        Delaunay::Point const &c = input[Delaunay::c (**i)];
+
+                        crossing->push_back (Geometry::makePoint (a.x, a.y));
+                        crossing->push_back (Geometry::makePoint (b.x, b.y));
+                        crossing->push_back (Geometry::makePoint (c.x, c.y));
+                }
+#endif
+
+                // Paragraph 3.
+                TriangleEdgeList newEdges;
+                while (!crossingEdges.empty ()) {
+
+                        // Paragraph 3.1
+                        TriangleEdgeType currentCrossingEdge = crossingEdges.front ();
+                        crossingEdges.pop_front ();
+
+                        // Paragraph 3.2
+                        if (currentCrossingEdge.covers (TriangleEdgeType (549, 8)))
+                        if (!index.twoTrianglesConvex (currentCrossingEdge)) {
+                                crossingEdges.push_back (currentCrossingEdge);
+
+#if 0
+                                std::cerr << "####> !CONVEX" << std::endl;
+#endif
+
+                                if (crossingEdges.size () == 1) {
+                                        /*
+                                         * TODO Jeśli jest tylko jedna przecinająca dany constraint, to jeśli convex,
+                                         * to flip, a jeśli nie, to nie wiem, ale coś trzeba tu zrobić.
+                                         */
+                                        assert (0); // not implemented TODO - swoją drogą - to jest chyab niemożliwe (jeśli program dobrze działa)?!
+                                }
+
+                                continue;
+                        }
+
+#if 0
+                        std::cerr << "####> +++CONVEX" << std::endl;
+#endif
+                        // Dwa przyległę trójkąty zawierające e tworzą czworobok wypukły.
+                        TriangleEdgeType newDiagonal;
+
+                        /*
+                         * Tu trzeba
+                         * - uaktualnić wierzchołki trójkątów.
+                         * - uaktualnić ich zlinkowane trójkąty.
+                         * - uaktualnic triangleIndex (potrzebny w findCrossing edges).
+                         */
+                        index.flip (currentCrossingEdge, &newDiagonal);
+
+                        EdgeType a = index.triangleEdgeToEdge (missingConstraint);
+                        EdgeType b = index.triangleEdgeToEdge (newDiagonal);
+
+                        if (Delaunay::intersects (a, b)) {
+                                crossingEdges.push_back (newDiagonal);
+                        }
+                        else {
+                                newEdges.push_back (newDiagonal);
+                        }
+                }
+
+                // 4. Make CDT from DT.
+#if 0
+                std::cerr << newEdges.size () << std::endl;
+#endif
+                for (typename TriangleEdgeList::iterator i = newEdges.begin (); i != newEdges.end (); ++i) {
+                        TriangleEdgeType &newEdge = *i;
+
+                        if (newEdge.covers (missingConstraint)) {
+                                continue;
+                        }
+
+                        if (!index.twoTrianglesNotDelaunay (newEdge)) {
+                                TriangleEdgeType newDiagonal;
+                                index.flip (newEdge, &newDiagonal);
+
+                                // TODO w paperze napsali, żeby ją zachowac w kolekcji nowych krawędzi - ale po co?
+                                newEdge = newDiagonal;
+                        }
+                }
+        }
+}
+
+/****************************************************************************/
+
+template <
+        typename PointArg,
+        typename TriangleArg,
+        typename PointList
+>
+void Triangulation <PointArg, TriangleArg, PointList>::removeSuperfulous (PointListType const &pointList, bool removeOutside)
+{
+        // TODO Dać parametr czy CW czy CCW
+        // 5. Remove superfluous triangles.  Input must be in COUNTER CLOCKWISE order.
+        TriangleVector const &triangulation = index.getTriangulation ();
+
+        for (typename TriangleVector::const_iterator i = triangulation.begin (), e = triangulation.end (); i != e; ++i) {
+                TriangleType &triangle = const_cast <TriangleType &> (*i);
+
+                if (a (triangle) == 0 && b (triangle) == 0 && c (triangle) == 0) {
+                        continue;
+                }
+
+                if (removeOutside ^ triangleInside (triangle, pointList)) {
+                        a (triangle, 0);
+                        b (triangle, 0);
+                        c (triangle, 0);
+                }
+        }
+
+        index.clean ();
+}
+
+/****************************************************************************/
+
+template <
+        typename PointArg,
+        typename TriangleArg,
+        typename PointList
+>
 bool Triangulation <PointArg, TriangleArg, PointList>::diagonalInside (PointType const &a, PointType const &ap, PointType const &an, PointType const &b) const
 {
-        int apx = ap.x - a.x;
-        int apy = ap.y - a.y;
-        int anx = an.x - a.x;
-        int any = an.y - a.y;
-        int bx = b.x - a.x;
-        int by = b.y - a.y;
+        int apx = getX (ap) - getX (a);
+        int apy = getY (ap) - getY (a);
+        int anx = getX (an) - getX (a);
+        int any = getY (an) - getY (a);
+        int bx = getX (b) - getX (a);
+        int by = getY (b) - getY (a);
 
         int apXan = apx * any - apy * anx;
         int apXb = apx * by - apy * bx;
@@ -485,18 +509,18 @@ template <
         typename TriangleArg,
         typename PointList
 >
-bool Triangulation <PointArg, TriangleArg, PointList>::diagonalInside (TriangleEdgeType const &e) const
+bool Triangulation <PointArg, TriangleArg, PointList>::diagonalInside (TriangleEdgeType const &e, PointListType const &pointList) const
 {
         // If e is one of constraints, we don't need to perform furher computations.
         if (std::abs (e.a - e.b) == 1) {
                 return true;
         }
 
-        size_t pointsSize = input.size ();
-        PointType const &a = input[e.a];
-        PointType const &ap = input[(e.a == 0) ? (pointsSize - 1) : (e.a - 1)];
-        PointType const &an = input[(e.a == pointsSize - 1) ? (0) : (e.a + 1)];
-        PointType const &b = input[e.b];
+        size_t pointsSize = pointList.size ();
+        PointType const &a = pointList[e.a];
+        PointType const &ap = pointList[(e.a == 0) ? (pointsSize - 1) : (e.a - 1)];
+        PointType const &an = pointList[(e.a == pointsSize - 1) ? (0) : (e.a + 1)];
+        PointType const &b = pointList[e.b];
 
         return diagonalInside (a, ap, an, b);
 }
@@ -508,10 +532,10 @@ template <
         typename TriangleArg,
         typename PointList
 >
-bool Triangulation <PointArg, TriangleArg, PointList>::triangleInside (TriangleType const &t) const
+bool Triangulation <PointArg, TriangleArg, PointList>::triangleInside (TriangleType const &t, PointListType const &pointList) const
 {
         for (int i = 1; i <= 3; ++i) {
-                if (!diagonalInside (getEdge (t, static_cast <SideEnum> (i)))) {
+                if (!diagonalInside (getEdge (t, static_cast <SideEnum> (i)), pointList)) {
                         return false;
                 }
         }
