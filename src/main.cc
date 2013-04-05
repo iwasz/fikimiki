@@ -64,8 +64,8 @@ static void renderSceneCB()
 
         Matrix4f world;
 
-        world.m[0][0] = scale;        world.m[0][1] = 0.0f;       world.m[0][2] = 0.0f;        world.m[0][3] = translation.x;
-        world.m[1][0] = 0.0f;         world.m[1][1] = scale;      world.m[1][2] = 0.0f;        world.m[1][3] = translation.y;
+        world.m[0][0] = scale;        world.m[0][1] = 0.0f;       world.m[0][2] = 0.0f;        world.m[0][3] = translation.X;
+        world.m[1][0] = 0.0f;         world.m[1][1] = scale;      world.m[1][2] = 0.0f;        world.m[1][3] = translation.Y;
         world.m[2][0] = 0.0f;         world.m[2][1] = 0.0f;       world.m[2][2] = scale;       world.m[2][3] = 0.0f;
         world.m[3][0] = 0.0f;         world.m[3][1] = 0.0f;       world.m[3][2] = 0.0f;        world.m[3][3] = 1.0f;
 
@@ -116,11 +116,11 @@ static void createVertexBuffer (const char *fileName)
         file >> scale;
         std::cerr << "Scale : " << scale << std::endl;
 
-        file >> translation.x >> translation.y;
-        std::cerr << "Translation : " << translation.x << "," << translation.y << std::endl;
+        file >> translation.X >> translation.Y;
+        std::cerr << "Translation : " << translation.X << "," << translation.Y << std::endl;
 
-        Point p;
-        while (file >> p.x >> p.y) {
+        Point p = {0, 0};
+        while (file >> p.X >> p.Y) {
                 points.push_back (p);
         }
 
@@ -130,13 +130,13 @@ static void createVertexBuffer (const char *fileName)
         cdt->setPoints (points);
 
         MyTriagulation::PointListType constraint;
-        p.x = -2, p.y = 2;
+        p.X = -2, p.Y = 2;
         constraint.push_back (p);
-        p.x = -2, p.y = 4;
+        p.X = -2, p.Y = 4;
         constraint.push_back (p);
-        p.x = 2, p.y = 4;
+        p.X = 2, p.Y = 4;
         constraint.push_back (p);
-        p.x = 2, p.y = 2;
+        p.X = 2, p.Y = 2;
         constraint.push_back (p);
         cdt->addConstraint (constraint);
 

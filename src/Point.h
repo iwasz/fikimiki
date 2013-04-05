@@ -14,8 +14,8 @@
 #include <vector>
 
 struct Point {
-        float x;
-        float y;
+        float X;
+        float Y;
 };
 
 BOOST_STATIC_ASSERT (boost::has_trivial_assign <Point>::value);
