@@ -130,13 +130,24 @@ static void createVertexBuffer (const char *fileName)
         cdt->setPoints (points);
 
         MyTriagulation::PointListType constraint;
-        p.X = -2, p.Y = 2;
+//        p.X = -2, p.Y = 2;
+//        constraint.push_back (p);
+//        p.X = -2, p.Y = 4;
+//        constraint.push_back (p);
+//        p.X = 2, p.Y = 4;
+//        constraint.push_back (p);
+//        p.X = 2, p.Y = 2;
+//        constraint.push_back (p);
+//        cdt->addConstraint (constraint);
+
+        constraint.clear ();
+        p.X = -9, p.Y = -1;
         constraint.push_back (p);
-        p.X = -2, p.Y = 4;
+        p.X = 9, p.Y = -1;
         constraint.push_back (p);
-        p.X = 2, p.Y = 4;
+        p.X = 9, p.Y = 6;
         constraint.push_back (p);
-        p.X = 2, p.Y = 2;
+        p.X = -9, p.Y = 6;
         constraint.push_back (p);
         cdt->addConstraint (constraint);
 

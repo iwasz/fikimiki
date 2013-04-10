@@ -26,7 +26,7 @@ template <
 class InputCollection {
 public:
 
-        InputCollection () : /*points (0),*/ size_ (0) {}
+        InputCollection () : size_ (0) {}
         typedef TypeTraits <PointArg, TriangleArg, PointList> Traits;
         typedef typename Traits::PointType PointType;
         typedef typename Traits::TriangleType TriangleType;
@@ -39,6 +39,7 @@ public:
         void addConstraint (PointListType const &p);
         PointListType const &getConstraint (size_t i) const { return *pointsCollection[i]; }
         size_t getConstraintOffset (size_t i) const;
+        size_t getConstraintForIndex (size_t index) const;
 
         PointListCollectionType const &getPointsCollection () const { return pointsCollection; }
 
@@ -47,7 +48,6 @@ public:
 
 private:
 
-//        PointListType const *points;
         PointListCollectionType pointsCollection;
         size_t size_;
         typedef std::vector <size_t> BoundsVector;
@@ -139,6 +139,28 @@ size_t InputCollection <PointArg, TriangleArg, PointList>::getConstraintOffset (
         return bounds[i - 1] + 1;
 }
 
+/****************************************************************************/
+
+template <
+        typename PointArg,
+        typename TriangleArg,
+        typename PointList
+>
+size_t InputCollection <PointArg, TriangleArg, PointList>::getConstraintForIndex (size_t i) const
+{
+        BoundsIterator b = std::lower_bound (bounds.begin (), bounds.end (), i);
+
+        if (b == bounds.begin ()) {
+                return 0;
+        }
+        else if (b == bounds.end ()) {
+                return pointsCollection.size () - 1;
+        }
+        else {
+                return (b - bounds.begin ()) - 1;
+        }
 }
+
+} // namespace
 
 #endif /* INPUTCOLLECTION_H_ */
