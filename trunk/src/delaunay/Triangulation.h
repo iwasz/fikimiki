@@ -88,7 +88,8 @@ public:
         void linkTriangles ();
         void findMissingConstraints (size_t constraintNumber, TriangleEdgeList *missingConstraints, bool closed = true);
         void addMissingSegments (TriangleEdgeList const &missingSegments);
-        void removeSuperfulous (PointListType const &pointList, bool removeOutside = true);
+//        void removeSuperfulous (PointListType const &pointList, bool removeOutside = true);
+        void removeSuperfulous ();
 
         TriangleVector const &getTriangulation () const { return index.getTriangulation (); }
 
@@ -145,12 +146,65 @@ void Triangulation<PointArg, TriangleArg, PointList>::constructDelaunay (/*Geome
         TriangleEdgeList missingConstraints;
         findMissingConstraints (0, &missingConstraints);
         addMissingSegments (missingConstraints);
-        removeSuperfulous (input.getPoints ());
 
         missingConstraints.clear ();
         findMissingConstraints (1, &missingConstraints);
         addMissingSegments (missingConstraints);
-        removeSuperfulous (input.getConstraint (1), true);
+
+//        removeSuperfulous ();
+
+        // TODO : Konstrukcja super-rectangle.
+        // Usuwanie zewnętrznych.
+        // Usuwanie wewnętrznych (dziur).
+
+        // Numer pierwszego punktu super-rectangle
+        IndexType first = input.getPoints().size ();
+        // Pierwszy trójkat, który na pewno jest nazewnatrz.
+        TriangleType *outside = index.getTrianglesForPoint(first).front ();
+        TriangleType *inside = 0;
+
+        while (true) {
+
+                bool deadEnd = true;
+                for (unsigned int i = 1; i <= 3; ++i) {
+                        TriangleEdgeType e = getEdge (*outside, static_cast <SideEnum> (i));
+                        TriangleType *t = index.getAdjacentTriangle(*outside, static_cast <SideEnum> (i));
+
+                        std::cerr << "out = [" << a (*outside) << "," << b (*outside) << "," << c (*outside) << "], i = " << i << ", t=" << t << ", abse = " << std::abs (e.a - e.b) << std::endl;
+
+                        if (!t) {
+                                continue;
+                        }
+
+                        if (std::abs (e.a - e.b) == 1) {
+                                inside = t;
+                                continue;
+                        }
+
+                        IndexType ta = a (*t);
+                        IndexType tb = b (*t);
+                        IndexType tc = c (*t);
+
+                        if (ta == 0 && tb == 0 && tc == 0) {
+                                std::cerr << "t-zero" << std::endl;
+                                continue;
+                        }
+
+                        a (*outside, 0);
+                        b (*outside, 0);
+                        c (*outside, 0);
+
+                        outside = t;
+                        deadEnd = false;
+                        break;
+                }
+
+                if (deadEnd) {
+                        break;
+                }
+        }
+
+        index.clean ();
 
 #if 0
         printlog ("Triangulation time (derived from voronoi as its dual) : %f ms", t1.elapsed ().wall / 1000000.0);
@@ -451,23 +505,75 @@ void Triangulation <PointArg, TriangleArg, PointList>::addMissingSegments (Trian
 
 /****************************************************************************/
 
+//template <
+//        typename PointArg,
+//        typename TriangleArg,
+//        typename PointList
+//>
+//void Triangulation <PointArg, TriangleArg, PointList>::removeSuperfulous (PointListType const &pointList, bool removeOutside)
+//{
+//        // 5. Remove superfluous triangles.  Input must be in COUNTER CLOCKWISE order.
+//        TriangleVector const &triangulation = index.getTriangulation ();
+//
+//        for (typename TriangleVector::const_iterator i = triangulation.begin (), e = triangulation.end (); i != e; ++i) {
+//                TriangleType &triangle = const_cast <TriangleType &> (*i);
+//
+//                IndexType ta = a (triangle);
+//                IndexType tb = b (triangle);
+//                IndexType tc = c (triangle);
+//
+//                // TODO
+//                if (ta < 10 || ta > 13 || tb < 10 || tb > 13 || tc < 10 || tc > 13) {
+//                        continue;
+//                }
+//
+//                if (a (triangle) == 0 && b (triangle) == 0 && c (triangle) == 0) {
+//                        continue;
+//                }
+//
+//                if (removeOutside ^ triangleInside (triangle, pointList)) {
+//                        a (triangle, 0);
+//                        b (triangle, 0);
+//                        c (triangle, 0);
+//                }
+//        }
+//}
+
+
 template <
         typename PointArg,
         typename TriangleArg,
         typename PointList
 >
-void Triangulation <PointArg, TriangleArg, PointList>::removeSuperfulous (PointListType const &pointList, bool removeOutside)
+void Triangulation <PointArg, TriangleArg, PointList>::removeSuperfulous ()
 {
-        // TODO Dać parametr czy CW czy CCW
         // 5. Remove superfluous triangles.  Input must be in COUNTER CLOCKWISE order.
         TriangleVector const &triangulation = index.getTriangulation ();
 
         for (typename TriangleVector::const_iterator i = triangulation.begin (), e = triangulation.end (); i != e; ++i) {
                 TriangleType &triangle = const_cast <TriangleType &> (*i);
 
-                if (a (triangle) == 0 && b (triangle) == 0 && c (triangle) == 0) {
+                IndexType ta = a (triangle);
+                IndexType tb = b (triangle);
+                IndexType tc = c (triangle);
+
+                // Sprawdź czy wierzchołki trójkąta naeżą do jednego konstraintu.
+                size_t ca = input.getConstraintForIndex (ta);
+                size_t cb = input.getConstraintForIndex (tb);
+                size_t cc = input.getConstraintForIndex (tc);
+
+                // Jesli nie, to continue.
+                if (ca != cb || cb != cc) {
                         continue;
                 }
+
+                if (ta == 0 && tb == 0 && tc == 0) {
+                        continue;
+                }
+
+                // Jeśli tak, to pobierz referencję do tego konstraintu.
+                PointListType const &pointList = input.getConstraint (ca);
+                bool removeOutside = (ca == 0);
 
                 if (removeOutside ^ triangleInside (triangle, pointList)) {
                         a (triangle, 0);
@@ -476,6 +582,7 @@ void Triangulation <PointArg, TriangleArg, PointList>::removeSuperfulous (PointL
                 }
         }
 
+        // Clear triangles marked as to-delete.
         index.clean ();
 }
 
