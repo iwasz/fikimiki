@@ -163,6 +163,17 @@ void Triangulation<PointArg, TriangleArg, PointList>::constructDelaunay (/*Geome
         TriangleType *outside = index.getTrianglesForPoint(first).front ();
         TriangleType *inside = 0;
 
+        /*
+         * - Tworzyć na poczatku sper-rectangle.
+         * -- Znaleźć bounding box zewnętrznego ringu.
+         * -- Rozepchnąć ten bounding box o jakąś wartość i dodać punkty do wejściowych punktów.
+         *
+         * - Zaimplementować depth first search (DFS).
+         * -- Dla początkowego trójkąta w triangulacji algorytm DFS ma biec dalej po trójkątach i dla kazdego z nich uruchomic jakąś funkcję.
+         * -- W tej funkcji będziemy uzywać kolejnych funkcji, które będą klasyfikować trójkąt i oznaczac go jako do usunięcia lub nie.
+         */
+
+
         while (true) {
 
                 bool deadEnd = true;
