@@ -674,6 +674,7 @@ void Triangulation <PointArg, TriangleArg, PointList>::establishSuperTriangle (P
         std::vector <CoordinateType> coordinate;
         coordinate.reserve (p.size ());
 
+        // TODO nie kopiowac tych współrzędznych, tylko liniowe wyszukiwanie zrobić. Przecież zajmie tyle samo czasu, a nie zajmie w ogóle pamięci.
         for (typename PointListType::const_iterator i = p.begin (), e = p.end (); i != e; ++i) {
                 coordinate.push_back (getX (*i));
         }
