@@ -90,7 +90,7 @@ typename PointTraits <T>::CoordinateType getX (T const &point)
  * Helper accessor.
  */
 template <typename T>
-void setX (T const &point, typename PointTraits <T>::CoordinateType p)
+void setX (T &point, typename PointTraits <T>::CoordinateType p)
 {
         PointMutableTraits <T>::set (point, X, p);
 }
@@ -108,7 +108,7 @@ typename PointTraits <T>::CoordinateType getY (T const &point)
  * Helper accessor.
  */
 template <typename T>
-void setY (T const &point, typename PointTraits <T>::CoordinateType p)
+void setY (T &point, typename PointTraits <T>::CoordinateType p)
 {
         PointMutableTraits <T>::set (point, Y, p);
 }
