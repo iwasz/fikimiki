@@ -122,6 +122,7 @@ private:
 
         bool diagonalInside (TriangleEdgeType const &e, PointListType const &pointList) const;
         bool triangleInside (TriangleType const &t, PointListType const &pointList) const;
+        void establishSuperTriangle (PointListType const &p);
 
 private:
 
@@ -659,6 +660,68 @@ bool Triangulation <PointArg, TriangleArg, PointList>::triangleInside (TriangleT
         }
 
         return true;
+}
+
+/****************************************************************************/
+
+template <
+        typename PointArg,
+        typename TriangleArg,
+        typename PointList
+>
+void Triangulation <PointArg, TriangleArg, PointList>::establishSuperTriangle (PointListType const &p)
+{
+        std::vector <CoordinateType> coordinate;
+        coordinate.reserve (p.size ());
+
+        for (typename PointListType::const_iterator i = p.begin (), e = p.end (); i != e; ++i) {
+                coordinate.push_back (getX (*i));
+        }
+
+        std::sort (coordinate.begin (), coordinate.end ());
+
+        CoordinateType xmin = coordinate.front ();
+        CoordinateType xmax = coordinate.back ();
+        CoordinateType dx = (xmax - xmin) / 4.0;
+        xmin -= dx;
+        xmax += dx;
+
+        int j = 0;
+        for (typename PointListType::const_iterator i = p.begin (), e = p.end (); i != e; ++i, ++j) {
+                coordinate[j] = getY (*i);
+        }
+
+        std::sort (coordinate.begin (), coordinate.end ());
+
+        CoordinateType ymin = coordinate.front ();
+        CoordinateType ymax = coordinate.back ();
+        CoordinateType dy = (ymax - ymin) / 4.0;
+        ymin -= dy;
+        ymax += dy;
+
+#if 0
+        std::cerr << xmin << ", " << xmax << ", " << ymin << ", " << ymax << std::endl;
+#endif
+
+        PointType pt;
+        setX (pt, xmin);
+        setY (pt, ymin);
+        superTriangle.push_back (pt);
+
+        setX (pt, xmax);
+        setY (pt, ymin);
+        superTriangle.push_back (pt);
+
+        setX (pt, xmax);
+        setY (pt, ymax);
+        superTriangle.push_back (pt);
+
+        setX (pt, xmin);
+        setY (pt, ymax);
+        superTriangle.push_back (pt);
+
+        pointsCollection.push_back (&superTriangle);
+        size_ += superTriangle.size ();
 }
 
 } // namespace
